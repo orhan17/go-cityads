@@ -14,10 +14,10 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const maxPages = 5
+const maxPages = 100
 
 // SyncOffers @Summary Synchronize offers from external API
-// @Description Loads offers from an external API (up to 5 pages), updates or creates offers in the database, and clears cache for updated GEO codes.
+// @Description Loads offers from an external API , updates or creates offers in the database, and clears cache for updated GEO codes.
 // @Tags Sync
 // @Produce plain
 // @Success 200 {string} string "Все офферы загружены, обновлены и кеш очищен!"
@@ -33,7 +33,7 @@ func SyncOffers() {
 	// Это нам нужен чтобы кеш удалять (удалять которые обновились)
 	geoUpdated := make(map[string]bool)
 
-	// Данные загружаем только у 5 страниц (потом можно побольше поставить)
+	// Данные загружаем
 	for page := 1; page <= maxPages; page++ {
 		url := fmt.Sprintf("%s?page=%d", baseURL, page)
 		resp, err := client.R().Get(url)
