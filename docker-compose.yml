@@ -1,0 +1,81 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_geo_offers
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: geo_offers
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  api:
+    build: .
+    container_name: geo_offers_api
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - "3000:3000"
+    environment:
+      DB_USER: user
+      DB_PASS: password
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: geo_offers
+      API_URL: https://cityads.com/api/rest/webmaster/v2/offers/list
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  # Сервис для запуска тестов
+  test:
+    build:
+      context: .
+      target: test
+    container_name: geo_offers_test
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      DB_USER: user
+      DB_PASS: password
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: geo_offers
+    command: ["go", "test", "-v", "./..."]
+
+volumes:
+  mysql_data:
+  redis_data:
+  grafana_data:
